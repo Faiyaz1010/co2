@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>中山鉄工所本社net zero計算</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f4f4f9;
+    }
+    h1 {
+      font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+      color: #2751a0;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+    .data-entry, .saved-data {
+      margin-top: 20px;
+      overflow-x: auto;
+      white-space: nowrap;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background-color: #ffffff;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+      font-size: 14px;
+    }
+    th {
+      background-color: #007b8f;
+      color: #ffffff;
+    }
+    .fixed-column {
+      background-color: #f0f0f0;
+      color: #555;
+      font-weight: bold;
+    }
+    input[type="month"], input[type="text"] {
+      width: 120px;
+      text-align: center;
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    input[readonly] {
+      background-color: #e0e0e0;
+      color: #888;
+      pointer-events: none;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #007b8f;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+    button:hover {
+      background-color: #005f6b;
+    }
+  </style>
+</head>
+<body>
+
+<h1>中山鉄工所本社net zero計算</h1>
+
+<div class="data-entry">
+  <table id="entryTable">
+    <thead>
+      <tr>
+        <th>検針期間FROM</th>
+        <th class="fixed-column">合計使用電力量 (kWh)</th>
+        <th class="fixed-column">プロパンガス(LP),m3</th>
+        <th class="fixed-column">都市ガス,m3</th>
+        <th class="fixed-column">レギュラーガソリン (ℓ)</th>
+        <th class="fixed-column">灯油(ℓ)</th>
+        <th class="fixed-column">軽油(ℓ)</th>
+        <th class="fixed-column">水道(m3)</th>
+        <th class="fixed-column">㈱九州エナジー(kg-CO2/kWh)</th>
+        <th class="fixed-column">プロパンガス(LP)-(kg-CO2/m3)</th>
+        <th class="fixed-column">都市ガス(kg-CO2/ｍ3)</th>
+        <th class="fixed-column">レギュラーガソリン (kg-CO2/ℓ)</th>
+        <th class="fixed-column">灯油(kg-CO2/ℓ)</th>
+        <th class="fixed-column">軽油(kg-CO2/ℓ)</th>
+        <th class="fixed-column">水道(kg-CO2/ｍ3)</th>
+        <th class="fixed-column">電気使用電力量(kg-CO2)</th>
+        <th class="fixed-column">プロパンガス(kg-CO2)</th>
+        <th class="fixed-column">都市ガス (kg-CO2)</th>
+        <th class="fixed-column">レギュラーガソリン(kg-CO2)</th>
+        <th class="fixed-column">灯油(kg-CO2)</th>
+        <th class="fixed-column">軽油(kg-CO2)</th>
+        <th class="fixed-column">水道(kg-CO2)</th>
+        <th class="fixed-column">合計(kg-CO2)</th>
+        <th class="fixed-column">太陽光売電(kWh)</th>
+        <th class="fixed-column">kg-CO2 削減</th>
+        <th class="fixed-column">正味のCO2排出量 (kg)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><input type="month" id="entryDate" required /></td>
+        <script>
+          for (let i = 1; i <= 25; i++) {
+            const readOnly = [9,10,11,12,13,14,15,16,17,18,19,20,21,22,24,25].includes(i) ? 'readonly' : '';
+            document.write(`<td><input type="text" id="row${i}" ${readOnly}></td>`);
+          }
+        </script>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<button onclick="saveData()">Save Data</button>
+
+<h3>Filter Entries</h3>
+<div>
+  From: <input type="month" id="fromDate" />
+  To: <input type="month" id="toDate" />
+  <button onclick="filterData()">Filter</button>
+</div>
+
+<!-- Saved Entries Section -->
+<h3 class="section-title">📊 保存されたデータ (Saved Entries)</h3>
+<div class="saved-data">
+  <table id="savedTable">
+    <thead>
+      <tr>
+        <th>検針期間FROM</th>
+        <th>合計使用電力量 (kWh)</th>
+        <th>プロパンガス(LP),m3</th>
+        <th>プロパンガス(LP),m3</th>
+        <th>レギュラーガソリン (ℓ)</th>
+        <th>灯油(ℓ)</th>
+        <th>軽油(ℓ)</th>
+        <th>水道(m3)</th>
+        <th>㈱九州エナジー(kg-CO2/kWh)</th>
+        <th>プロパンガス(LP)-(kg-CO2/m3)</th>
+        <th>都市ガス(kg-CO2/ｍ3)</th>
+        <th>レギュラーガソリン (kg-CO2/ℓ)</th>
+        <th>灯油(kg-CO2/ℓ)</th>
+        <th>軽油(kg-CO2/ℓ)</th>
+        <th>水道(kg-CO2/ｍ3)</th>
+        <th>電気使用電力量(kg-CO2)</th>
+        <th>プロパンガス(kg-CO2)</th>
+        <th>都市ガス (kg-CO2)</th>
+        <th>レギュラーガソリン(kg-CO2)</th>
+        <th>灯油(kg-CO2)</th>
+        <th>軽油(kg-CO2)</th>
+        <th>水道(kg-CO2)</th>
+        <th>合計(kg-CO2)</th>
+        <th>太陽光売電(kWh)</th>
+        <th>kg-CO2 削減</th>
+        <th>正味のCO2排出量 (kg)</th>
+      </tr>
+    </thead>
+    <tbody id="savedBody"></tbody>
+  </table>
+</div>
+
+<div id="filterResult" style="margin-top: 20px;"></div>
+
+<script>
+  function getNumericValue(rowId) {
+    const val = document.getElementById(`row${rowId}`).value.trim();
+    return val === "" ? 0 : parseFloat(val);
+  }
+
+  function saveData() {
+    const date = document.getElementById("entryDate").value;
+    if (!date) {
+      alert("Please select a date");
+      return;
+    }
+
+    // Set row9–14 fixed values
+    const fixedValues = [3.00, 2.21, 2.322, 2.489, 2.619, 0.54];
+    for (let i = 0; i < fixedValues.length; i++) {
+      document.getElementById(`row${i + 9}`).value = fixedValues[i];
+    }
+
+    const r1 = getNumericValue(1);
+    const r2 = getNumericValue(2);
+    const r3 = getNumericValue(3);
+    const r4 = getNumericValue(4);
+    const r5 = getNumericValue(5);
+    const r6 = getNumericValue(6);
+    const r7 = getNumericValue(7);
+    const r8 = getNumericValue(8);
+    const r23 = getNumericValue(23);
+
+    const r9 = 3.00, r10 = 2.21, r11 = 2.322, r12 = 2.489, r13 = 2.619, r14 = 0.54;
+
+    const r15 = r1 * r8;
+    const r16 = r2 * r9;
+    const r17 = r3 * r10;
+    const r18 = r4 * r11;
+    const r19 = r5 * r12;
+    const r20 = r6 * r13;
+    const r21 = r7 * r14;
+
+    const r22 = r15 + r16 + r17 + r18 + r19 + r20 + r21;
+    const r24 = r8 * r23;
+    const r25 = r22 - r24;
+
+    document.getElementById("row15").value = r15.toFixed(2);
+    document.getElementById("row16").value = r16.toFixed(2);
+    document.getElementById("row17").value = r17.toFixed(2);
+    document.getElementById("row18").value = r18.toFixed(2);
+    document.getElementById("row19").value = r19.toFixed(2);
+    document.getElementById("row20").value = r20.toFixed(2);
+    document.getElementById("row21").value = r21.toFixed(2);
+    document.getElementById("row22").value = r22.toFixed(2);
+    document.getElementById("row24").value = r24.toFixed(2);
+    document.getElementById("row25").value = r25.toFixed(2);
+
+    // Save table row
+    const row = document.createElement("tr");
+    const dateCell = document.createElement("td");
+    dateCell.innerText = date;
+    row.appendChild(dateCell);
+
+    for (let i = 1; i <= 25; i++) {
+      const cell = document.createElement("td");
+      const val = document.getElementById(`row${i}`).value.trim();
+      cell.innerText = val === "" ? "0" : val;
+      row.appendChild(cell);
+      document.getElementById(`row${i}`).value = "";
+    }
+
+    document.getElementById("savedBody").appendChild(row);
+    document.getElementById("entryDate").value = "";
+  }
+
+  function filterData() {
+    const fromDate = new Date(document.getElementById("fromDate").value);
+    const toDate = new Date(document.getElementById("toDate").value);
+    const rows = document.getElementById("savedBody").getElementsByTagName("tr");
+
+    if (isNaN(fromDate) || isNaN(toDate)) {
+      alert("Please select both From and To dates.");
+      return;
+    }
+
+    let totalPerColumn = Array(25).fill(0);
+
+    for (let row of rows) {
+      const date = new Date(row.cells[0].innerText);
+      if (date >= fromDate && date <= toDate) {
+        for (let i = 1; i <= 25; i++) {
+          totalPerColumn[i - 1] += parseFloat(row.cells[i].innerText) || 0;
+        }
+      }
+    }
+
+    let html = `<h4>Aggregated Data (${fromDate.toDateString()} – ${toDate.toDateString()}):</h4>`;
+    html += "<table border='1'><tr><th>Row</th><th>Total</th></tr>";
+    for (let i = 1; i <= 25; i++) {
+      html += `<tr><td>Row${i}</td><td>${totalPerColumn[i - 1].toFixed(2)}</td></tr>`;
+    }
+    html += "</table>";
+    document.getElementById("filterResult").innerHTML = html;
+  }
+</script>
+
+</body>
+</html>
